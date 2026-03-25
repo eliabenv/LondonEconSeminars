@@ -1,0 +1,2 @@
+"""London economics seminar tracker."""
+

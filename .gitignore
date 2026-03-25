@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.DS_Store
+.env
+data/seminars.json
+data/weekly_digest_latest.html
+data/seminar_calendar_latest.html
+data/last_sent_week.txt
