@@ -28,7 +28,7 @@ It supports four things:
 - `KCL`: King's Business School seminar series and economics brownbag series.
 - `Imperial`: Economics & Public Policy seminars page.
 - `IFS`: official upcoming events page.
-- `OCE-EBRD`: OCE seminar-series page supplied by the user.
+- `OCE-EBRD`: OCE seminar-series page from Francesco Loiacono's webpage.
 
 Notes:
 
@@ -36,7 +36,7 @@ Notes:
 - `LBS` has recently exposed only past seminars on its official page. The parser is wired up, but you may see zero upcoming LBS events until the page is updated.
 - `Imperial` currently lists 2026 dates, speakers and titles on the source page, but not explicit times/venues in the visible page text. The tracker uses a 13:30-14:45 placeholder and marks the venue as unspecified.
 - `IFS` is currently scraped from the official upcoming events page rather than a structured seminar table, because the seminar page does not expose upcoming entries in a parser-friendly format.
-- `OCE-EBRD` is currently sourced from the OCE seminar-series page provided by the user, which lists weekly speakers, titles and times but not venues.
+- `OCE-EBRD` is currently sourced from the OCE seminar-series page from Francesco Loiacono's webpage, which lists weekly speakers, titles and times but not venues.
 
 ## Requirements
 
