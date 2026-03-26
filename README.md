@@ -120,6 +120,44 @@ python3 main.py serve --host 127.0.0.1 --port 8000 --refresh-on-start
 
 The dashboard includes an `Open Calendar` link that opens the same data in a month-grid calendar view.
 
+## Publish It As A Web Link
+
+The repository now includes a GitHub Actions workflow at `.github/workflows/publish_calendar.yml`.
+It does three things on GitHub's servers:
+
+1. Runs the offline tests.
+2. Refreshes the seminar snapshot from the live source pages.
+3. Builds a static website and publishes it to GitHub Pages.
+
+The workflow runs in three cases:
+
+- when you push to the `main` or `master` branch
+- when you start it manually from the `Actions` tab
+- every Monday at `07:00 UTC`
+
+### Turn It On
+
+1. Push this project to a GitHub repository.
+2. In GitHub, open `Settings` then `Pages`.
+3. Under `Build and deployment`, choose `GitHub Actions`.
+4. Open the `Actions` tab and run `Publish Seminar Calendar` once.
+5. After the first run finishes, GitHub will show a stable Pages link such as `https://your-org.github.io/your-repo/`.
+
+The published site contains:
+
+- `index.html`: the seminar calendar
+- `weekly_digest.html`: the next 7 days in digest form
+- `seminars.json`: the latest raw snapshot
+
+### How Colleagues Update It
+
+Give your colleagues write access to the GitHub repository. They can then update the site in two ways:
+
+- edit the scraper or documentation and push changes to the main project branch
+- open the `Actions` tab and manually run `Publish Seminar Calendar`
+
+They do not need to edit the HTML file directly. The HTML is rebuilt automatically from the latest seminar data each time the workflow runs.
+
 ## Testing
 
 Run the offline tests with:
