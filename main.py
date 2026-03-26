@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import argparse
+import json
+import os
 from datetime import datetime
 from pathlib import Path
 
@@ -9,6 +11,7 @@ from seminar_tracker.config import CALENDAR_HTML_PATH, DIGEST_HTML_PATH, INSTITU
 from seminar_tracker.digest import build_digest, render_text_digest
 from seminar_tracker.mailer import send_email, smtp_is_configured
 from seminar_tracker.models import Snapshot
+from seminar_tracker.site_html import render_site_homepage
 from seminar_tracker.sources import refresh_snapshot
 from seminar_tracker.storage import (
     load_dotenv,
@@ -37,6 +40,26 @@ def _refresh_and_save(horizon_days: int) -> Snapshot:
     return snapshot
 
 
+def _load_or_refresh_snapshot(refresh: bool, horizon_days: int) -> Snapshot:
+    snapshot = _refresh_and_save(horizon_days) if refresh else load_snapshot(SNAPSHOT_PATH)
+    if snapshot is None:
+        snapshot = _refresh_and_save(horizon_days)
+    return snapshot
+
+
+def _resolve_repo_url(explicit_url: str | None) -> str | None:
+    if explicit_url:
+        return explicit_url.rstrip("/")
+    env_url = os.environ.get("SEMINAR_TRACKER_REPO_URL")
+    if env_url:
+        return env_url.rstrip("/")
+    server_url = os.environ.get("GITHUB_SERVER_URL")
+    repository = os.environ.get("GITHUB_REPOSITORY")
+    if server_url and repository:
+        return f"{server_url.rstrip('/')}/{repository}"
+    return None
+
+
 def cmd_refresh(args: argparse.Namespace) -> None:
     snapshot = _refresh_and_save(args.horizon_days)
     print(
@@ -45,9 +68,7 @@ def cmd_refresh(args: argparse.Namespace) -> None:
 
 
 def cmd_digest(args: argparse.Namespace) -> None:
-    snapshot = _refresh_and_save(args.horizon_days) if args.refresh else load_snapshot(SNAPSHOT_PATH)
-    if snapshot is None:
-        snapshot = _refresh_and_save(args.horizon_days)
+    snapshot = _load_or_refresh_snapshot(args.refresh, args.horizon_days)
     now = _now()
     text_body, html_body, seminars = build_digest(snapshot, now=now, days=args.days)
     if args.html_output:
@@ -80,9 +101,7 @@ def cmd_send_weekly(args: argparse.Namespace) -> None:
 
 
 def cmd_calendar(args: argparse.Namespace) -> None:
-    snapshot = _refresh_and_save(args.horizon_days) if args.refresh else load_snapshot(SNAPSHOT_PATH)
-    if snapshot is None:
-        snapshot = _refresh_and_save(args.horizon_days)
+    snapshot = _load_or_refresh_snapshot(args.refresh, args.horizon_days)
     now = _now()
     html, seminars = build_calendar_html(
         snapshot,
@@ -95,6 +114,47 @@ def cmd_calendar(args: argparse.Namespace) -> None:
     scope = args.institution or "all institutions"
     print(f"Wrote HTML calendar for {scope} with {len(seminars)} seminars:")
     print(output_path)
+
+
+def cmd_site(args: argparse.Namespace) -> None:
+    snapshot = _load_or_refresh_snapshot(args.refresh, args.horizon_days)
+    now = _now()
+    output_dir = Path(args.output_dir)
+    repo_url = _resolve_repo_url(args.repo_url)
+    manual_update_url = f"{repo_url}#manual-update-for-colleagues" if repo_url else None
+
+    calendar_html, calendar_seminars = build_calendar_html(
+        snapshot,
+        now=now,
+        days=args.days,
+        home_url="index.html",
+        repo_url=repo_url,
+        manual_update_url=manual_update_url,
+    )
+    _, digest_html, digest_seminars = build_digest(snapshot, now=now, days=args.digest_days)
+    homepage_html = render_site_homepage(
+        last_updated=snapshot.refreshed_at,
+        calendar_days=args.days,
+        digest_days=args.digest_days,
+        calendar_count=len(calendar_seminars),
+        digest_count=len(digest_seminars),
+        error_count=len(snapshot.errors),
+        repo_url=repo_url,
+        manual_update_url=manual_update_url,
+    )
+
+    write_text(output_dir / "index.html", homepage_html)
+    write_text(output_dir / "calendar.html", calendar_html)
+    write_text(output_dir / "weekly_digest.html", digest_html)
+    write_text(
+        output_dir / "seminars.json",
+        json.dumps(snapshot.to_dict(), indent=2, sort_keys=True),
+    )
+    print(
+        f"Wrote publishable site with {len(calendar_seminars)} calendar seminars and "
+        f"{len(digest_seminars)} digest seminars:"
+    )
+    print(output_dir)
 
 
 def cmd_serve(args: argparse.Namespace) -> None:
@@ -145,6 +205,15 @@ def build_parser() -> argparse.ArgumentParser:
     calendar_parser.add_argument("--institution", choices=INSTITUTIONS)
     calendar_parser.add_argument("--output", help="Optional output path for the generated HTML calendar.")
     calendar_parser.set_defaults(func=cmd_calendar)
+
+    site_parser = subparsers.add_parser("site", help="Write a publishable static seminar website.")
+    site_parser.add_argument("--days", type=int, default=60)
+    site_parser.add_argument("--digest-days", type=int, default=7)
+    site_parser.add_argument("--refresh", action="store_true")
+    site_parser.add_argument("--horizon-days", type=int, default=180)
+    site_parser.add_argument("--output-dir", default="site")
+    site_parser.add_argument("--repo-url", help="Optional repository URL for the published site.")
+    site_parser.set_defaults(func=cmd_site)
 
     serve_parser = subparsers.add_parser("serve", help="Serve a local seminar dashboard.")
     serve_parser.add_argument("--host", default="127.0.0.1")

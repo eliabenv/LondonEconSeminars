@@ -45,6 +45,7 @@ def serve_dashboard(
                     now=datetime.now(snapshot.refreshed_at.tzinfo),
                     days=days,
                     institution=institution,
+                    home_url="/",
                 )
             else:
                 html = _render_dashboard(snapshot, days=days, institution=institution)

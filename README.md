@@ -18,6 +18,7 @@ It supports four things:
 3. Sending that digest by email through SMTP.
 4. Serving a local browser dashboard.
 5. Writing a standalone HTML calendar view.
+6. Building a publishable static website for GitHub Pages.
 
 ## What It Scrapes
 
@@ -112,6 +113,19 @@ python3 main.py calendar --days 90 --output data/my_calendar.html
 
 The default output file is `data/seminar_calendar_latest.html`.
 
+### Build the publishable website
+
+```bash
+python3 main.py site --refresh --days 60 --digest-days 7 --output-dir site
+```
+
+This writes:
+
+- `site/index.html`: landing page with a button to the calendar
+- `site/calendar.html`: the calendar page
+- `site/weekly_digest.html`: a short digest page
+- `site/seminars.json`: the raw snapshot
+
 ### Serve the dashboard
 
 ```bash
@@ -127,7 +141,7 @@ It does three things on GitHub's servers:
 
 1. Runs the offline tests.
 2. Refreshes the seminar snapshot from the live source pages.
-3. Builds a static website and publishes it to GitHub Pages.
+3. Builds a static website with a landing page, a calendar page and update links, then publishes it to GitHub Pages.
 
 The workflow runs in three cases:
 
@@ -145,11 +159,14 @@ The workflow runs in three cases:
 
 The published site contains:
 
-- `index.html`: the seminar calendar
+- `index.html`: landing page with an `Open Calendar` button
+- `calendar.html`: the seminar calendar
 - `weekly_digest.html`: the next 7 days in digest form
 - `seminars.json`: the latest raw snapshot
 
-### How Colleagues Update It
+The landing page and calendar page both show the most recent refresh time. This is the right design for GitHub Pages, because Pages is static: it can serve the latest finished refresh immediately, but it cannot quietly re-scrape all source pages every time a visitor clicks without adding delay and extra infrastructure.
+
+### Manual Update For Colleagues
 
 Give your colleagues write access to the GitHub repository. They can then update the site in two ways:
 
@@ -157,6 +174,13 @@ Give your colleagues write access to the GitHub repository. They can then update
 - open the `Actions` tab and manually run `Publish Seminar Calendar`
 
 They do not need to edit the HTML file directly. The HTML is rebuilt automatically from the latest seminar data each time the workflow runs.
+
+If someone wants to update it from their own machine instead of GitHub, the manual sequence is:
+
+```bash
+python3 main.py refresh
+python3 main.py site --days 60 --digest-days 7 --output-dir site
+```
 
 ## Testing
 

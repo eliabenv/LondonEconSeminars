@@ -5,7 +5,9 @@ from collections import defaultdict
 from datetime import date, datetime, timedelta
 from html import escape
 from typing import Iterable
+from zoneinfo import ZoneInfo
 
+from seminar_tracker.config import DEFAULT_TIMEZONE
 from seminar_tracker.digest import display_title, filter_upcoming
 from seminar_tracker.models import RefreshError, Seminar, Snapshot
 
@@ -91,6 +93,10 @@ def _short_series_label(series: str) -> str:
         compact = compact.replace(old, new)
     compact = " ".join(compact.split()).strip(" -")
     return compact or series
+
+
+def _format_timestamp(value: datetime) -> str:
+    return value.astimezone(ZoneInfo(DEFAULT_TIMEZONE)).strftime("%d %B %Y %H:%M %Z")
 
 
 def _render_calendar_event(seminar: Seminar) -> str:
@@ -195,6 +201,10 @@ def render_calendar_html(
     errors: list[RefreshError] | None = None,
     institution: str | None = None,
     title: str = "London Economics Seminar Calendar",
+    snapshot_refreshed_at: datetime | None = None,
+    home_url: str | None = None,
+    repo_url: str | None = None,
+    manual_update_url: str | None = None,
 ) -> str:
     end = now + timedelta(days=days)
     by_day = _group_by_day(seminars)
@@ -219,6 +229,23 @@ def render_calendar_html(
         f"to {escape(end.strftime('%d %b %Y'))}"
         if institution
         else f"Seminars from {escape(now.strftime('%d %b %Y'))} to {escape(end.strftime('%d %b %Y'))}"
+    )
+    last_updated = snapshot_refreshed_at or now
+    nav_links: list[str] = []
+    if home_url:
+        nav_links.append(f"<a href='{escape(home_url)}'>Home</a>")
+    if repo_url:
+        nav_links.append(
+            f"<a href='{escape(repo_url)}' target='_blank' rel='noreferrer noopener'>Repository</a>"
+        )
+    if manual_update_url:
+        nav_links.append(
+            f"<a href='{escape(manual_update_url)}' target='_blank' rel='noreferrer noopener'>How to update</a>"
+        )
+    actions_html = (
+        f"<div class='hero-links'>{''.join(nav_links)}</div>"
+        if nav_links
+        else ""
     )
 
     return f"""<!doctype html>
@@ -277,6 +304,20 @@ def render_calendar_html(
         gap: 10px;
         flex-wrap: wrap;
         margin-top: 18px;
+      }}
+      .hero-links {{
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 16px;
+      }}
+      .hero-links a {{
+        text-decoration: none;
+        color: var(--ink);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 8px 12px;
+        background: rgba(255,255,255,0.8);
       }}
       .legend span {{
         display: inline-flex;
@@ -471,7 +512,8 @@ def render_calendar_html(
     <main>
       <section class="hero">
         <h1>{escape(title)}</h1>
-        <p class="lede">{subtitle}. Generated {escape(now.strftime('%d %B %Y %H:%M %Z'))}.</p>
+        <p class="lede">{subtitle}. Last updated {escape(_format_timestamp(last_updated))}.</p>
+        {actions_html}
         <div class="legend">
           <span><i style="background: var(--lse)"></i>LSE</span>
           <span><i style="background: var(--ucl)"></i>UCL</span>
@@ -518,6 +560,9 @@ def build_calendar_html(
     now: datetime,
     days: int,
     institution: str | None = None,
+    home_url: str | None = None,
+    repo_url: str | None = None,
+    manual_update_url: str | None = None,
 ) -> tuple[str, list[Seminar]]:
     seminars = filter_upcoming(snapshot.seminars, now=now, days=days, institution=institution)
     html = render_calendar_html(
@@ -526,5 +571,9 @@ def build_calendar_html(
         days=days,
         errors=snapshot.errors,
         institution=institution,
+        snapshot_refreshed_at=snapshot.refreshed_at,
+        home_url=home_url,
+        repo_url=repo_url,
+        manual_update_url=manual_update_url,
     )
     return html, seminars

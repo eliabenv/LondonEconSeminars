@@ -37,15 +37,8 @@ jobs:
       - name: Run offline checks
         run: python3 -m unittest discover -s tests -v
 
-      - name: Refresh seminar snapshot
-        run: python3 main.py refresh --horizon-days 180
-
       - name: Build static site
-        run: |
-          mkdir -p site
-          python3 main.py calendar --days 60 --output site/index.html
-          python3 main.py digest --days 7 --html-output site/weekly_digest.html
-          cp data/seminars.json site/seminars.json
+        run: python3 main.py site --refresh --days 60 --digest-days 7 --output-dir site
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5

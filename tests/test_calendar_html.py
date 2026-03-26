@@ -55,6 +55,10 @@ class CalendarHtmlTests(unittest.TestCase):
             now=now,
             days=14,
             errors=[RefreshError("UCL", "https://example.com/ucl", "No current detail page")],
+            snapshot_refreshed_at=datetime(2026, 3, 25, 8, 45, tzinfo=tz),
+            home_url="index.html",
+            repo_url="https://github.com/example/london-econ",
+            manual_update_url="https://github.com/example/london-econ#manual-update-for-colleagues",
         )
         self.assertIn("March 2026", html)
         self.assertIn("Intergenerational Effects of Domestic Violence", html)
@@ -65,6 +69,8 @@ class CalendarHtmlTests(unittest.TestCase):
         self.assertIn("Labour Econ", html)
         self.assertIn("+1 more", html)
         self.assertIn("overflow-toggle", html)
+        self.assertIn("Last updated 25 March 2026 08:45 GMT", html)
+        self.assertIn("How to update", html)
 
 
 if __name__ == "__main__":
