@@ -1,4 +1,4 @@
-# London Economics Seminar Tracker
+# [London Economics Seminar Tracker]([url](https://eliabenv.github.io/LondonEconSeminars/))
 
 A small Python application that pulls seminar listings from official pages for:
 
