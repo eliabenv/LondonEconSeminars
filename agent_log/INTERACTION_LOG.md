@@ -12,3 +12,9 @@
 - User asked for a GitHub Pages landing page with one clear button to the calendar, visible last-updated information, and a repository link with manual update instructions.
 - Added a new `site` build command, a static homepage renderer, last-updated labels on the calendar, and repository/manual-update links suitable for GitHub Pages.
 - Updated the publication workflow to deploy the generated homepage at `index.html` and the calendar at `calendar.html`.
+- User asked where the Pages homepage can be found.
+
+## 2026-03-27
+
+- User asked for a README link that takes readers directly to the published tracker.
+- Added the live GitHub Pages tracker link near the top of the README using the repository's GitHub Pages URL pattern.

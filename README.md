@@ -2,6 +2,8 @@
 
 Access the tracker [here]([url](https://eliabenv.github.io/LondonEconSeminars/))
 
+Live tracker: [Open the published seminar tracker](https://eliabenv.github.io/LondonEconSeminars/)
+
 A small Python application that pulls seminar listings from official pages for:
 
 - LSE
