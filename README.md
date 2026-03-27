@@ -1,6 +1,4 @@
-# [London Economics Seminar Tracker]([url](https://eliabenv.github.io/LondonEconSeminars/))
-
-Access the tracker [here]([url](https://eliabenv.github.io/LondonEconSeminars/))
+# London Economics Seminar Tracker
 
 Live tracker: [Open the published seminar tracker](https://eliabenv.github.io/LondonEconSeminars/)
 
